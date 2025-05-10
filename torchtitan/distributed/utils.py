@@ -224,6 +224,12 @@ def init_distributed(job_config):
             backend = f"{device_type}:{backend},cpu:gloo"
         return backend
 
+    # 检查是否为单卡训练
+    world_size = int(os.environ.get("WORLD_SIZE", 1))
+    if world_size == 1:
+        logger.info("[INFO] Single GPU training detected. Skipping distributed initialization.")
+        return
+
     TRACE_BUFFER_SIZE = "TORCH_NCCL_TRACE_BUFFER_SIZE"
     TRACE_FILE = "TORCH_NCCL_DEBUG_INFO_TEMP_FILE"
     DUMP_ON_TIMEOUT = "TORCH_NCCL_DUMP_ON_TIMEOUT"
@@ -249,7 +255,6 @@ def init_distributed(job_config):
         backend=_get_distributed_backend(job_config),
         timeout=timedelta(seconds=job_config.comm.init_timeout_seconds),
     )
-
 
 def set_pg_timeouts(timeout, world_mesh):
     """
